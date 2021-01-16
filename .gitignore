@@ -1,0 +1,5 @@
+node_modules
+*-error.lock
+config/development.json
+src/api-response/*.json
+yarn.lock

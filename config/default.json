@@ -1,0 +1,10 @@
+{
+  "automation": {
+    "headless": false,
+    "typingDelay": 0
+  },
+  "form": {
+    "username": "foo@trading212.com",
+    "password": "trading-bot"
+  }
+}
