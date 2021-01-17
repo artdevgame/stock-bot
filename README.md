@@ -1,4 +1,4 @@
-# trading212-dividends
+# stock-bot
 
 Automate retrieval of Trading 212 dividend payments.
 
