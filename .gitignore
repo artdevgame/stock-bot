@@ -3,3 +3,6 @@ node_modules
 config/development.json
 src/api-response/*.json
 yarn.lock
+/dashboard
+.parcel-cache
+src/dashboard/*.json

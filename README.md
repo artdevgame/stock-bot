@@ -13,4 +13,6 @@ Automate retrieval of Trading 212 dividend payments.
 2. Set your Trading 212 username and password in the [config](./config/default.json)
 3. Run `yarn fetch`
 
-A JSON file will be created in `./src/api-response` for further processing by you.
+A JSON file will be created in `./src/api-response/dividends.json` of your payments.
+
+To view a dashboard of your results, run `yarn start`.
