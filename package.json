@@ -1,5 +1,5 @@
 {
-  "name": "trading212-dividends",
+  "name": "stock-bot",
   "version": "1.0.0",
   "description": "Automate retrieval of T212 divdend payments",
   "main": "src/index.ts",
