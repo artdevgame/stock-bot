@@ -2,10 +2,6 @@ import dayjs from 'dayjs';
 import { default as dividends } from './api-response/dividends.json';
 import fs from 'fs';
 
-interface Instrument {
-  prettyName: string;
-}
-
 interface MonthlyView {
   label: string;
   month: number;
@@ -13,22 +9,14 @@ interface MonthlyView {
   year: number;
 }
 
-type StockInstrument = string;
-
 const OUTPUT_MONTHLY_DATA = `${__dirname}/dashboard/monthly.json`;
 
 const run = async () => {
-  const instruments: Record<StockInstrument, Instrument> = {};
   const monthlyData: MonthlyView[] = [];
 
-  for (const dividend of dividends.data) {
-    const { instrument, prettyName } = dividend.subHeading.context;
+  for (const dividend of dividends) {
     const { amount } = dividend.mainInfo.context;
     const { date } = dividend;
-
-    if (!(instrument in instruments)) {
-      instruments[instrument] = { prettyName };
-    }
 
     const dividendDate = dayjs(date);
     const existingMonthlyView = monthlyData.find(

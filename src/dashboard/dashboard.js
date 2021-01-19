@@ -3,8 +3,6 @@ import ReactDOM from 'react-dom';
 import { BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, ResponsiveContainer } from 'recharts';
 import monthlyData from './monthly.json';
 
-console.log(monthlyData);
-
 const Dashboard = () => (
   <ResponsiveContainer aspect={4 / 1}>
     <BarChart data={monthlyData}>
