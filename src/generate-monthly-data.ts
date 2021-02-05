@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { default as dividends } from './api-response/dividends.json';
+import { default as dividends } from './trading212/.cache/dividends.json';
 import fs from 'fs';
 
 interface MonthlyView {
@@ -11,10 +11,10 @@ interface MonthlyView {
 
 const OUTPUT_MONTHLY_DATA = `${__dirname}/dashboard/monthly.json`;
 
-const run = async () => {
+async function run() {
   const monthlyData: MonthlyView[] = [];
 
-  for (const dividend of dividends) {
+  for await (const dividend of dividends) {
     const { amount } = dividend.mainInfo.context;
     const { date } = dividend;
 
@@ -41,6 +41,6 @@ const run = async () => {
 
   fs.writeFileSync(OUTPUT_MONTHLY_DATA, JSON.stringify(monthlyData.reverse(), null, 2), { encoding: 'utf8' });
   console.log('[Process completed: Monthly data]');
-};
+}
 
 run();

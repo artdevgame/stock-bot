@@ -1,7 +1,7 @@
 node_modules
 *-error.lock
 config/development.json
-src/api-response/*.json
+src/trading212/.cache
 yarn.lock
 /dashboard
 .parcel-cache

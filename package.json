@@ -7,11 +7,13 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
-    "start": "yarn data:monthly && yarn dashboard",
-    "fetch": "ts-node-dev src/fetch-dividends.ts",
+    "dashboard": "parcel ./src/dashboard/index.html --dist-dir ./dashboard --no-cache --open",
+    "data:top-dividends": "ts-node-dev src/generate-top-dividends.ts",
+    "data:fetch": "ts-node-dev src/fetch-data.ts",
+    "data:inventory": "ts-node-dev src/generate-inventory.ts",
     "data:monthly": "ts-node-dev src/generate-monthly-data.ts",
-    "dashboard": "parcel ./src/dashboard/index.html --dist-dir ./dashboard --no-cache --open"
+    "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
+    "start": "yarn data:inventory && yarn data:monthly && yarn data:top-dividends && yarn dashboard"
   },
   "devDependencies": {
     "@types/config": "0.0.38",
@@ -37,7 +39,9 @@
     "node-fetch": "2.6.1",
     "puppeteer": "5.5.0",
     "react": "17.0.1",
+    "react-data-table-component": "^7.0.0-alpha-5",
     "react-dom": "17.0.1",
-    "recharts": "2.0.3"
+    "recharts": "2.0.3",
+    "styled-components": "^5.2.1"
   }
 }
