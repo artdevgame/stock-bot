@@ -3,6 +3,11 @@
     "headless": false,
     "typingDelay": 0
   },
+  "debug": false,
+  "finkio": {
+    "enabled": false,
+    "key": ""
+  },
   "form": {
     "username": "foo@trading212.com",
     "password": "trading-bot"

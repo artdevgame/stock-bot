@@ -13,7 +13,8 @@
     "data:inventory": "ts-node-dev src/generate-inventory.ts",
     "data:monthly": "ts-node-dev src/generate-monthly-data.ts",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --quiet --fix",
-    "start": "yarn data:inventory && yarn data:monthly && yarn data:top-dividends && yarn dashboard"
+    "start": "yarn dashboard",
+    "start:fresh": "yarn data:inventory && yarn data:monthly && yarn data:top-dividends && yarn dashboard"
   },
   "devDependencies": {
     "@types/config": "0.0.38",
@@ -37,11 +38,12 @@
     "config": "3.3.3",
     "dayjs": "1.10.3",
     "node-fetch": "2.6.1",
+    "node-html-parser": "2.1.0",
     "puppeteer": "5.5.0",
     "react": "17.0.1",
-    "react-data-table-component": "^7.0.0-alpha-5",
+    "react-data-table-component": "7.0.0-alpha-5",
     "react-dom": "17.0.1",
     "recharts": "2.0.3",
-    "styled-components": "^5.2.1"
+    "styled-components": "5.2.1"
   }
 }

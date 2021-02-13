@@ -1,5 +1,9 @@
 import { default as orders } from './trading212/.cache/orders.json';
 import fs from 'fs';
+import * as dividendMax from './dividendmax/client';
+import * as finkio from './finkio/client';
+import { clamp, round } from './helpers/number';
+import config from 'config';
 
 enum OrderSide {
   BUY = 'buy',
@@ -7,19 +11,18 @@ enum OrderSide {
 }
 
 interface Inventory {
+  dividendYield: number;
   invested: number;
   name: string;
   quantity: number;
 }
 
-type AllInventory = Record<Instrument, Inventory>;
+export type AllInventory = Record<Instrument, Inventory>;
 type Instrument = string;
 
 const OUTPUT_INVENTORY_DATA = `${__dirname}/dashboard/inventory.json`;
 
-const clamp = (min: number, max: number) => Math.min(Math.max(max, min), max);
-const round = (number: number, decimalPlaces: number = 8) =>
-  Number(Math.round(Number(`${number}e${decimalPlaces}`)) + `e-${decimalPlaces}`);
+const dividends = new Set<string>();
 
 async function run() {
   const inventoryData: AllInventory = {};
@@ -49,11 +52,29 @@ async function run() {
     const previousInvested = inventoryData[instrument]?.invested ?? 0;
     const newInvested = round(side === OrderSide.BUY ? previousInvested + amount : previousInvested - amount);
 
+    const { dividendYield = 0 } = inventoryData[instrument] ?? {};
+
     inventoryData[instrument] = {
+      dividendYield,
       invested: newInvested,
       name: name.trim(),
       quantity: newQuantity,
     };
+
+    if (!dividends.has(instrument)) {
+      const dividendInfo = await dividendMax.fetchDividendsForInstrument({ instrument });
+
+      if (typeof dividendInfo !== 'undefined') {
+        config.get('debug') && console.log(`DividendMax stock: ${name} (${instrument})`, dividendInfo);
+
+        inventoryData[instrument].dividendYield = dividendInfo.dividendYield;
+      } else if (config.get('finkio.enabled')) {
+        config.get('debug') && console.log('Querying FinkIO API', instrument);
+        inventoryData[instrument].dividendYield = await finkio.fetchDividendsForInstrument({ instrument });
+      }
+
+      dividends.add(instrument);
+    }
   }
 
   const orderedInventory = Object.keys(inventoryData)
