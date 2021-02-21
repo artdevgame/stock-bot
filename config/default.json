@@ -4,12 +4,12 @@
     "typingDelay": 0
   },
   "debug": false,
-  "finkio": {
-    "enabled": false,
-    "key": ""
-  },
   "form": {
     "username": "foo@trading212.com",
     "password": "trading-bot"
+  },
+  "stockBotApi": {
+    "host": "http://localhost:3000",
+    "key": ""
   }
 }

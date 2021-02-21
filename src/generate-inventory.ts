@@ -1,9 +1,7 @@
 import { default as orders } from './trading212/.cache/orders.json';
-import fs from 'fs';
-import * as dividendMax from './dividendmax/client';
-import * as finkio from './finkio/client';
 import { clamp, round } from './helpers/number';
-import config from 'config';
+import * as cache from './helpers/cache';
+import * as stockBotApi from './stock-bot-api/client';
 
 enum OrderSide {
   BUY = 'buy',
@@ -15,16 +13,17 @@ interface Inventory {
   invested: number;
   name: string;
   quantity: number;
+  symbol: string;
 }
 
-export type AllInventory = Record<Instrument, Inventory>;
-type Instrument = string;
+export type AllInventory = Record<Isin, Inventory>;
+type Isin = string;
 
-const OUTPUT_INVENTORY_DATA = `${__dirname}/dashboard/inventory.json`;
-
-const dividends = new Set<string>();
+const dividendStocks = new Set();
+const problematicStocks = new Set();
 
 async function run() {
+  const cacheOptions = { filename: 'inventory.json', path: `${__dirname}/dashboard`, purgeDate: cache.NeverPurge };
   const inventoryData: AllInventory = {};
 
   for await (const order of orders) {
@@ -32,48 +31,53 @@ async function run() {
       continue;
     }
 
-    const { instrument, prettyName: name } = order.heading.context;
+    const { instrument: symbol, prettyName } = order.heading.context;
     const { quantity = 0, quantityPrecision = 8 } = order.subHeading.context;
     const { amount = 0 } = order.mainInfo.context!;
     const side = order.subHeading.key.replace('history.order.filled.', '') as OrderSide;
-    const previousQuantity = inventoryData[instrument]?.quantity ?? 0;
+    const previousQuantity = inventoryData[symbol]?.quantity ?? 0;
     const newQuantity = round(
       clamp(0, side === OrderSide.BUY ? previousQuantity + quantity : previousQuantity - quantity),
       quantityPrecision,
     );
+    const name = prettyName.trim();
+
+    const instrument = await stockBotApi.fetchInstrument({ symbol });
+    const { isin } = instrument;
 
     if (newQuantity === 0) {
-      if (instrument in inventoryData) {
-        delete inventoryData[instrument];
+      if (isin in inventoryData) {
+        delete inventoryData[isin];
       }
       continue;
     }
 
-    const previousInvested = inventoryData[instrument]?.invested ?? 0;
+    const previousInvested = inventoryData[isin]?.invested ?? 0;
     const newInvested = round(side === OrderSide.BUY ? previousInvested + amount : previousInvested - amount);
 
-    const { dividendYield = 0 } = inventoryData[instrument] ?? {};
-
-    inventoryData[instrument] = {
-      dividendYield,
+    inventoryData[isin] = {
+      dividendYield: inventoryData[isin]?.dividendYield ?? 0,
       invested: newInvested,
-      name: name.trim(),
+      name: name,
       quantity: newQuantity,
+      symbol,
     };
 
-    if (!dividends.has(instrument)) {
-      const dividendInfo = await dividendMax.fetchDividendsForInstrument({ instrument });
+    try {
+      const isDividendStock = dividendStocks.has(isin);
+      const isOtherStock = problematicStocks.has(isin);
 
-      if (typeof dividendInfo !== 'undefined') {
-        config.get('debug') && console.log(`DividendMax stock: ${name} (${instrument})`, dividendInfo);
-
-        inventoryData[instrument].dividendYield = dividendInfo.dividendYield;
-      } else if (config.get('finkio.enabled')) {
-        config.get('debug') && console.log('Querying FinkIO API', instrument);
-        inventoryData[instrument].dividendYield = await finkio.fetchDividendsForInstrument({ instrument });
+      if (isDividendStock || isOtherStock) {
+        continue;
       }
 
-      dividends.add(instrument);
+      const { dividendYield } = await stockBotApi.fetchDividend({ instrument });
+
+      inventoryData[isin].dividendYield = dividendYield;
+      dividendStocks.add(isin);
+    } catch (err) {
+      console.error(err.message, `: ${name} (${symbol}) - ${isin}`);
+      problematicStocks.add(isin);
     }
   }
 
@@ -86,7 +90,7 @@ async function run() {
 
   const totalInvested = Object.values(orderedInventory).reduce((subTotal, current) => subTotal + current.invested, 0);
 
-  fs.writeFileSync(OUTPUT_INVENTORY_DATA, JSON.stringify(orderedInventory, null, 2), { encoding: 'utf8' });
+  cache.writeToCache(orderedInventory, cacheOptions);
   console.log('[Process completed: Inventory data]', `Total invested: £${totalInvested.toFixed(2)}`);
 }
 

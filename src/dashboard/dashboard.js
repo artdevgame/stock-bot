@@ -8,8 +8,8 @@ import topDividendsData from './top-dividends.json';
 const columns = [
   {
     grow: 0,
-    name: 'Instrument',
-    selector: 'instrument',
+    name: 'Symbol',
+    selector: 'symbol',
     sortable: true,
   },
   {

@@ -1,8 +1,7 @@
 import { RequiredCookie } from './client';
 import fetch from 'node-fetch';
-import fs from 'fs';
-import path from 'path';
 import { Transaction, TransactionsPayload } from './types';
+import * as cache from '../helpers/cache';
 
 interface FetchDividends {
   customerSession: string;
@@ -11,14 +10,13 @@ interface FetchDividends {
   sessionId: string;
 }
 
-const OUTPUT_API_RESPONSE = `${__dirname}/.cache/dividends.json`;
-
 export async function fetchDividends({
   customerSession,
   loginToken,
   olderThan,
   sessionId,
 }: FetchDividends): Promise<Transaction[]> {
+  const cacheOptions = { filename: 'dividends.json', path: `${__dirname}/.cache` };
   let dividendUrl = 'https://live.trading212.com/rest/history/dividends';
 
   if (typeof olderThan !== 'undefined') {
@@ -52,10 +50,7 @@ export async function fetchDividends({
     ];
   }
 
-  fs.writeFileSync(path.resolve(OUTPUT_API_RESPONSE), JSON.stringify(dividends.data, null, 2), {
-    encoding: 'utf8',
-    flag: 'w',
-  });
+  cache.writeToCache(dividends.data, cacheOptions);
 
   return dividends.data;
 }
