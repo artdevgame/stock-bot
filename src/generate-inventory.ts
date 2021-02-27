@@ -27,7 +27,7 @@ async function run() {
   const inventoryData: AllInventory = {};
 
   for await (const order of orders) {
-    if (order.additionalInfo.key !== 'history.order.status.filled') {
+    if (!['history.order.status.filled', 'history.order.status.partial-fill'].includes(order.additionalInfo.key)) {
       continue;
     }
 

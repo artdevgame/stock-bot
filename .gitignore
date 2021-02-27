@@ -6,3 +6,4 @@ yarn.lock
 /dashboard
 .parcel-cache
 src/dashboard/*.json
+src/dashboard/.purgeAt

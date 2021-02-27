@@ -84,7 +84,7 @@ export interface KeyRatios {
 export interface Transaction {
   additionalInfo: {
     context: null;
-    key: string; // history.order.status.filled | history.order.status.cancelled
+    key: 'history.order.status.filled' | 'history.order.status.partial-fill' | 'history.order.status.cancelled';
     meta: null;
   } | null;
   date: string; // "2021-01-19T15:56:55+02:00"

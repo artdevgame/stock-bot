@@ -54,6 +54,11 @@ const columns = [
     selector: 'lastPaymentDate',
     sortable: true,
   },
+  {
+    name: 'Last Amount',
+    selector: 'lastPaymentAmount',
+    sortable: true,
+  },
 ];
 
 const Label = ({ x, y, stroke, value }) => (

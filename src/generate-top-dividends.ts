@@ -4,6 +4,7 @@ import { AllInventory } from './generate-inventory';
 import { round } from './helpers/number';
 import * as cache from './helpers/cache';
 import * as stockBotApi from './stock-bot-api/client';
+import dayjs from 'dayjs';
 
 interface Dividend {
   averaged: number;
@@ -11,6 +12,7 @@ interface Dividend {
   dividendYield: number;
   invested: number;
   isin: string;
+  lastPaymentAmount: number;
   lastPaymentDate: string;
   name: string;
   numberOfPayments: number;
@@ -43,20 +45,26 @@ async function run() {
     const newTotal = round(total + amount);
     const averaged = round(newTotal / totalPayments, 2);
 
+    const previousDate = dividendData[symbol]?.lastPaymentDate || '0000-00-00';
+    const lastPaymentDate = dayjs(dividend.date).isAfter(previousDate) ? dividend.date : previousDate;
+
+    const lastPaymentAmount = lastPaymentDate === dividend.date ? amount : dividendData[symbol]?.lastPaymentAmount ?? 0;
+
     const instrument = await stockBotApi.fetchInstrument({ symbol });
     const { isin } = instrument;
 
     const { dividendYield, invested } = (inventory as AllInventory)[isin];
 
-    const bangForBuck = round(getMonthlyYield(dividendYield) * averaged * totalPayments, 5);
+    const bangForBuck = round(getMonthlyYield(dividendYield) * numberOfPayments, 5);
 
     dividendData[symbol] = {
       averaged,
       bangForBuck,
-      dividendYield,
+      dividendYield: round(dividendYield * 100, 2),
       invested,
       isin,
-      lastPaymentDate: dividend.date,
+      lastPaymentAmount,
+      lastPaymentDate,
       name: name.trim(),
       numberOfPayments: totalPayments,
       symbol,
