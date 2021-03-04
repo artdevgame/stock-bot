@@ -4,7 +4,7 @@ Automate retrieval of Trading 212 dividend payments.
 
 ## Requirements
 
-- Node.js (only tested against `v14`)
+- Node.js (>= `v14.14.0`)
 - Yarn
 
 > I've created [stock-bot-api](https://github.com/artdevgame/stock-bot-api) to retrieve dividend yield information, which I intend to host somewhere in the future, but for now you can download and run it locally. It's not _exactly_ a requirement, but this app will show warnings when trying to generate the dashboard data without it.

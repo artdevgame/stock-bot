@@ -16,6 +16,9 @@
     "start": "yarn dashboard",
     "start:fresh": "yarn data:inventory && yarn data:monthly && yarn data:top-dividends && yarn dashboard"
   },
+  "peerDependencies": {
+    "node": "14.14.0"
+  },
   "devDependencies": {
     "@types/config": "0.0.38",
     "@types/node": "14.14.21",
