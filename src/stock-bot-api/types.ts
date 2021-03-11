@@ -15,7 +15,5 @@ export interface FetchInstrumentWithSymbol {
 }
 
 export interface Instrument {
-  isin: string;
-  name: string;
-  symbol: string;
+  id: string;
 }

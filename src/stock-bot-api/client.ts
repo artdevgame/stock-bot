@@ -59,9 +59,7 @@ export async function fetchInstrument({ symbol }: FetchInstrumentWithSymbol) {
   const instrumentQuery = `
     query {
       fetchInstrumentWithSymbol(symbol: "${symbol}") {
-        isin
-        name
-        symbol
+        id
       }
     }
   `;
@@ -75,10 +73,10 @@ export async function fetchInstrument({ symbol }: FetchInstrumentWithSymbol) {
 }
 
 export async function fetchDividend({ instrument }: FetchDividend) {
-  const { isin, name, symbol } = instrument;
+  const { id } = instrument;
 
   const cacheOptions = {
-    filename: `${isin}.json`,
+    filename: `${id}.json`,
     path: `${__dirname}/.cache/dividends`,
   };
 
@@ -92,7 +90,7 @@ export async function fetchDividend({ instrument }: FetchDividend) {
 
   const dividendQuery = `
     query {
-      fetchDividend(instrument: { isin: "${isin}", name: "${name}", symbol: "${symbol}"}) {
+      fetchDividend(id: "${id}") {
         dividendYield
       }
     }

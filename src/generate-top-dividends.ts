@@ -11,7 +11,6 @@ interface Dividend {
   bangForBuck: number;
   dividendYield: number;
   invested: number;
-  isin: string;
   lastPaymentAmount: number;
   lastPaymentDate: string;
   name: string;
@@ -51,9 +50,9 @@ async function run() {
     const lastPaymentAmount = lastPaymentDate === dividend.date ? amount : dividendData[symbol]?.lastPaymentAmount ?? 0;
 
     const instrument = await stockBotApi.fetchInstrument({ symbol });
-    const { isin } = instrument;
+    const { id } = instrument;
 
-    const { dividendYield, invested } = (inventory as AllInventory)[isin];
+    const { dividendYield, invested } = (inventory as AllInventory)[id];
 
     const bangForBuck = round(getMonthlyYield(dividendYield) * numberOfPayments, 5);
 
@@ -62,7 +61,6 @@ async function run() {
       bangForBuck,
       dividendYield: round(dividendYield * 100, 2),
       invested,
-      isin,
       lastPaymentAmount,
       lastPaymentDate,
       name: name.trim(),

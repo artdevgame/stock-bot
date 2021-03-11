@@ -16,8 +16,8 @@ interface Inventory {
   symbol: string;
 }
 
-export type AllInventory = Record<Isin, Inventory>;
-type Isin = string;
+export type AllInventory = Record<InstrumentId, Inventory>;
+type InstrumentId = string;
 
 const dividendStocks = new Set();
 const problematicStocks = new Set();
@@ -43,20 +43,20 @@ async function run() {
     const name = prettyName.trim();
 
     const instrument = await stockBotApi.fetchInstrument({ symbol });
-    const { isin } = instrument;
+    const { id } = instrument;
 
     if (newQuantity === 0) {
-      if (isin in inventoryData) {
-        delete inventoryData[isin];
+      if (id in inventoryData) {
+        delete inventoryData[id];
       }
       continue;
     }
 
-    const previousInvested = inventoryData[isin]?.invested ?? 0;
+    const previousInvested = inventoryData[id]?.invested ?? 0;
     const newInvested = round(side === OrderSide.BUY ? previousInvested + amount : previousInvested - amount);
 
-    inventoryData[isin] = {
-      dividendYield: inventoryData[isin]?.dividendYield ?? 0,
+    inventoryData[id] = {
+      dividendYield: inventoryData[id]?.dividendYield ?? 0,
       invested: newInvested,
       name: name,
       quantity: newQuantity,
@@ -64,8 +64,8 @@ async function run() {
     };
 
     try {
-      const isDividendStock = dividendStocks.has(isin);
-      const isOtherStock = problematicStocks.has(isin);
+      const isDividendStock = dividendStocks.has(id);
+      const isOtherStock = problematicStocks.has(id);
 
       if (isDividendStock || isOtherStock) {
         continue;
@@ -73,11 +73,11 @@ async function run() {
 
       const { dividendYield } = await stockBotApi.fetchDividend({ instrument });
 
-      inventoryData[isin].dividendYield = dividendYield;
-      dividendStocks.add(isin);
+      inventoryData[id].dividendYield = dividendYield;
+      dividendStocks.add(id);
     } catch (err) {
-      console.error(err.message, `: ${name} (${symbol}) - ${isin}`);
-      problematicStocks.add(isin);
+      console.error(err.message, `: ${name} (${symbol}) - ${id}`);
+      problematicStocks.add(id);
     }
   }
 
