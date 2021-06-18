@@ -39,16 +39,16 @@ const columns = [
     selector: 'invested',
     sortable: true,
   },
-  {
-    name: 'Yield (%)',
-    selector: 'dividendYield',
-    sortable: true,
-  },
-  {
-    name: 'BFB',
-    selector: 'bangForBuck',
-    sortable: true,
-  },
+  // {
+  //   name: 'Yield (%)',
+  //   selector: 'dividendYield',
+  //   sortable: true,
+  // },
+  // {
+  //   name: 'BFB',
+  //   selector: 'bangForBuck',
+  //   sortable: true,
+  // },
   {
     cell: (row) => row.lastPaymentDate.slice(0, 10),
     name: 'Last Payment',

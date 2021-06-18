@@ -4,16 +4,16 @@ import { fetchOrders } from './trading212/orders';
 
 async function run() {
   try {
-    const tokens = await authenticate();
+    const authenticatedProps = await authenticate();
 
-    if (typeof tokens === 'undefined') {
+    if (typeof authenticatedProps === 'undefined') {
       return;
     }
 
-    const { customerSession, loginToken, sessionId } = tokens;
+    await fetchDividends(authenticatedProps);
+    await fetchOrders(authenticatedProps);
 
-    await fetchDividends({ customerSession, loginToken, sessionId });
-    await fetchOrders({ customerSession, loginToken, sessionId });
+    console.log('[Process completed: Data retrieved from T212]');
   } catch (err) {
     console.error(err);
   }

@@ -1,7 +1,7 @@
-import { default as orders } from './trading212/.cache/orders.json';
-import { clamp, round } from './helpers/number';
 import * as cache from './helpers/cache';
+import { clamp, round } from './helpers/number';
 import * as stockBotApi from './stock-bot-api/client';
+import { default as orders } from './trading212/.cache/orders.json';
 
 enum OrderSide {
   BUY = 'buy',
@@ -31,7 +31,7 @@ async function run() {
       continue;
     }
 
-    const { instrument: symbol, prettyName } = order.heading.context;
+    const { instrument: symbol, instrumentCode: id, prettyName } = order.heading.context;
     const { quantity = 0, quantityPrecision = 8 } = order.subHeading.context;
     const { amount = 0 } = order.mainInfo.context!;
     const side = order.subHeading.key.replace('history.order.filled.', '') as OrderSide;
@@ -42,8 +42,8 @@ async function run() {
     );
     const name = prettyName.trim();
 
-    const instrument = await stockBotApi.fetchInstrument({ symbol });
-    const { id } = instrument;
+    // const instrument = await stockBotApi.fetchInstrument({ symbol });
+    // const { id } = instrument;
 
     if (newQuantity === 0) {
       if (id in inventoryData) {
@@ -71,11 +71,11 @@ async function run() {
         continue;
       }
 
-      const { dividendYield } = await stockBotApi.fetchDividend({ instrument });
+      // const { dividendYield } = await stockBotApi.fetchDividend({ instrument });
+      // inventoryData[id].dividendYield = dividendYield;
 
-      inventoryData[id].dividendYield = dividendYield;
       dividendStocks.add(id);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err.message, `: ${name} (${symbol}) - ${id}`);
       problematicStocks.add(id);
     }

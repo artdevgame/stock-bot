@@ -1,3 +1,8 @@
+export interface AuthenticatedWebClient {
+  accountId: number;
+  tradingType: 'ISA';
+}
+
 export interface BalanceSheet extends FinancialStatement {
   statement: 'total-assets' | 'total-liabilities';
   type: 'BALANCE_SHEET';

@@ -1,10 +1,11 @@
-import { default as dividends } from './trading212/.cache/dividends.json';
+import dayjs from 'dayjs';
+
 import { default as inventory } from './dashboard/inventory.json';
 import { AllInventory } from './generate-inventory';
-import { round } from './helpers/number';
 import * as cache from './helpers/cache';
+import { round } from './helpers/number';
 import * as stockBotApi from './stock-bot-api/client';
-import dayjs from 'dayjs';
+import { default as dividends } from './trading212/.cache/dividends.json';
 
 interface Dividend {
   averaged: number;
@@ -35,7 +36,7 @@ async function run() {
   const dividendData: Dividends = {};
 
   for await (const dividend of dividends) {
-    const { instrument: symbol, prettyName: name } = dividend.subHeading.context;
+    const { instrument: symbol, instrumentCode: id, prettyName: name } = dividend.subHeading.context;
     const { amount = 0 } = dividend.mainInfo.context!;
 
     const numberOfPayments = dividendData[symbol]?.numberOfPayments ?? 0;
@@ -49,8 +50,8 @@ async function run() {
 
     const lastPaymentAmount = lastPaymentDate === dividend.date ? amount : dividendData[symbol]?.lastPaymentAmount ?? 0;
 
-    const instrument = await stockBotApi.fetchInstrument({ symbol });
-    const { id } = instrument;
+    // const instrument = await stockBotApi.fetchInstrument({ symbol });
+    // const { id } = instrument;
 
     const { dividendYield, invested } = (inventory as AllInventory)[id];
 
