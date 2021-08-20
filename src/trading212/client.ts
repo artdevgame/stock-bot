@@ -9,14 +9,21 @@ export enum RequiredCookie {
   CUSTOMER_SESSION = 'CUSTOMER_SESSION',
   LOGIN_TOKEN = 'LOGIN_TOKEN',
   SESSION_ID = 'TRADING212_SESSION_LIVE',
+  USER_EMAIL = 'USER_EMAIL',
 }
 
-export interface AuthenticationProps {
+interface AuthenticationProps {
   accountId?: number;
-  customerSession: string;
+  ampToken: AMPToken;
   loginToken: string;
   mfaToken: MFAToken;
   sessionId: string;
+  userEmailToken: string;
+}
+
+interface AMPToken {
+  name: string;
+  value: string;
 }
 
 interface MFAToken {
@@ -25,24 +32,35 @@ interface MFAToken {
   value: string;
 }
 
-export async function authenticate(): Promise<AuthenticationProps | undefined> {
+export async function authenticate() {
   try {
     const browser = await puppeteer.launch({ headless: Boolean(config.get('automation.headless')) });
     const page = await browser.newPage();
 
     await page.goto('https://www.trading212.com/en/login');
 
-    await page.type('#username-real', config.get('form.username'), { delay: config.get('automation.typingDelay') });
-    await page.type('#pass-real', config.get('form.password'), { delay: config.get('automation.typingDelay') });
-    await page.click('.button-login');
+    await page.type('input[name="email"]', config.get('form.username'), {
+      delay: config.get('automation.typingDelay'),
+    });
+    await page.type('input[name="password"]', config.get('form.password'), {
+      delay: config.get('automation.typingDelay'),
+    });
+    await page.click('input[type="submit"]');
 
     await page.waitForNavigation({ waitUntil: 'load' });
+
+    const authenticatedWebClientRes = await page.waitForResponse(
+      'https://live.trading212.com/rest/v1/webclient/authenticate',
+    );
+    const { accountId } = (await authenticatedWebClientRes.json()) as AuthenticatedWebClient;
 
     const cookies = await page.cookies();
 
     const customerSession = cookies.find((cookie) => cookie.name === RequiredCookie.CUSTOMER_SESSION)?.value;
     const loginToken = cookies.find((cookie) => cookie.name === RequiredCookie.LOGIN_TOKEN)?.value;
     const sessionId = cookies.find((cookie) => cookie.name === RequiredCookie.SESSION_ID)?.value;
+    const userEmailToken = cookies.find((cookie) => cookie.name === RequiredCookie.USER_EMAIL)?.value;
+    const ampCookie = cookies.find((cookie) => /amp_/.test(cookie.name));
     const mfaCookie = cookies.find((cookie) => /([a-z0-9]+)/.test(cookie.name) && cookie.value.includes('%22'));
 
     await browser.close();
@@ -59,9 +77,22 @@ export async function authenticate(): Promise<AuthenticationProps | undefined> {
       throw new Error(`Unable to retrieve ${RequiredCookie.SESSION_ID} from cookies`);
     }
 
+    if (!userEmailToken) {
+      throw new Error(`Unable to retrieve ${RequiredCookie.USER_EMAIL} from cookies`);
+    }
+
+    if (!ampCookie) {
+      throw new Error('Unable to retrieve AMP cookie');
+    }
+
     if (!mfaCookie) {
       throw new Error(`Unable to retrieve MFA from cookies`);
     }
+
+    const ampToken = {
+      name: ampCookie.name,
+      value: ampCookie.value,
+    };
 
     const mfaToken = {
       name: mfaCookie.name,
@@ -69,52 +100,16 @@ export async function authenticate(): Promise<AuthenticationProps | undefined> {
       decoded: mfaCookie.value.replace(/\%22/g, ''),
     };
 
-    return authenticateWebClient({ customerSession, loginToken, mfaToken, sessionId });
+    return {
+      accountId,
+      ampToken,
+      customerSession,
+      loginToken,
+      mfaToken,
+      sessionId,
+      userEmailToken,
+    };
   } catch (err) {
     console.error(err);
   }
-}
-
-async function authenticateWebClient({ customerSession, loginToken, mfaToken, sessionId }: AuthenticationProps) {
-  const authenticationRes = await fetch('https://live.trading212.com/rest/v1/webclient/authenticate', {
-    headers: {
-      Accept: 'application/json',
-      Cookie: [
-        `${RequiredCookie.CUSTOMER_SESSION}=${customerSession}`,
-        `${RequiredCookie.LOGIN_TOKEN}=${loginToken}`,
-        `${RequiredCookie.SESSION_ID}=${sessionId}`,
-        `${mfaToken.name}=${mfaToken.value}`,
-      ].join(';'),
-      Host: 'live.trading212.com',
-      Referer: 'https://live.trading212.com',
-      'sec-ch-ua': '";Not\\A"Brand";v="99", "Chromium";v="88"',
-      'sec-ch-ua-mobile': '?0',
-      'Sec-Fetch-Dest': 'empty',
-      'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'same-origin',
-      'X-Trader-Client': ['application=WC4', 'version=1.11.0', `dUUID=${mfaToken.decoded}`].join(','),
-    },
-  });
-
-  if (!authenticationRes.ok) {
-    throw new Error(`Unable to authenticate web client: ${authenticationRes.statusText}`);
-  }
-
-  const responseCookies = authenticationRes.headers.raw()['set-cookie'];
-
-  if (!responseCookies) {
-    throw new Error('No cookies found after authenticating web client');
-  }
-
-  const cookies = cookieParser.parse(responseCookies, { map: true });
-
-  const result: AuthenticatedWebClient = await authenticationRes.json();
-
-  return {
-    accountId: result.accountId,
-    customerSession: cookies[RequiredCookie.CUSTOMER_SESSION].value,
-    loginToken,
-    mfaToken,
-    sessionId: cookies[RequiredCookie.SESSION_ID].value,
-  };
 }

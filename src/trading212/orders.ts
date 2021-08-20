@@ -1,13 +1,15 @@
-import { RequiredCookie } from './client';
 import fetch from 'node-fetch';
-import { Transaction, TransactionsPayload } from './types';
+
 import * as cache from '../helpers/cache';
+import { RequiredCookie } from './client';
+import { Transaction, TransactionsPayload } from './types';
 
 interface FetchOrders {
   customerSession: string;
   loginToken: string;
   olderThan?: string;
   sessionId: string;
+  userEmailToken: string;
 }
 
 export async function fetchOrders({
@@ -15,6 +17,7 @@ export async function fetchOrders({
   loginToken,
   olderThan,
   sessionId,
+  userEmailToken,
 }: FetchOrders): Promise<Transaction[]> {
   const cacheOptions = { filename: 'orders.json', path: `${__dirname}/.cache` };
   let dividendUrl = 'https://live.trading212.com/rest/history/orders';
@@ -29,6 +32,7 @@ export async function fetchOrders({
         `${RequiredCookie.CUSTOMER_SESSION}=${customerSession}`,
         `${RequiredCookie.LOGIN_TOKEN}=${loginToken}`,
         `${RequiredCookie.SESSION_ID}=${sessionId}`,
+        `${RequiredCookie.USER_EMAIL}=${userEmailToken}`,
       ].join(';'),
     },
   });
@@ -44,7 +48,10 @@ export async function fetchOrders({
     const lastDividend = orders.data[totalOrders - 1];
     const { date } = lastDividend;
 
-    orders.data = [...orders.data, ...(await fetchOrders({ customerSession, loginToken, sessionId, olderThan: date }))];
+    orders.data = [
+      ...orders.data,
+      ...(await fetchOrders({ customerSession, loginToken, sessionId, olderThan: date, userEmailToken })),
+    ];
   }
 
   cache.writeToCache(orders.data, cacheOptions);

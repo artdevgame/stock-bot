@@ -1,13 +1,15 @@
-import { RequiredCookie } from './client';
 import fetch from 'node-fetch';
-import { Transaction, TransactionsPayload } from './types';
+
 import * as cache from '../helpers/cache';
+import { RequiredCookie } from './client';
+import { Transaction, TransactionsPayload } from './types';
 
 interface FetchDividends {
   customerSession: string;
   loginToken: string;
   olderThan?: string;
   sessionId: string;
+  userEmailToken: string;
 }
 
 export async function fetchDividends({
@@ -15,6 +17,7 @@ export async function fetchDividends({
   loginToken,
   olderThan,
   sessionId,
+  userEmailToken,
 }: FetchDividends): Promise<Transaction[]> {
   const cacheOptions = { filename: 'dividends.json', path: `${__dirname}/.cache` };
   let dividendUrl = 'https://live.trading212.com/rest/history/dividends';
@@ -29,6 +32,7 @@ export async function fetchDividends({
         `${RequiredCookie.CUSTOMER_SESSION}=${customerSession}`,
         `${RequiredCookie.LOGIN_TOKEN}=${loginToken}`,
         `${RequiredCookie.SESSION_ID}=${sessionId}`,
+        `${RequiredCookie.USER_EMAIL}=${userEmailToken}`,
       ].join(';'),
     },
   });
@@ -46,7 +50,7 @@ export async function fetchDividends({
 
     dividends.data = [
       ...dividends.data,
-      ...(await fetchDividends({ customerSession, loginToken, sessionId, olderThan: date })),
+      ...(await fetchDividends({ customerSession, loginToken, sessionId, olderThan: date, userEmailToken })),
     ];
   }
 
